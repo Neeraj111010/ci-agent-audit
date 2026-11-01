@@ -1,0 +1,14 @@
+id: amp
+name: Amp CLI
+vendor: Amp
+description: Amp coding agent CLI for interactive and non-interactive use in local shells and CI workflows.
+cli_binaries:
+  - amp
+cli_packages:
+  - "@ampcode/cli"
+  - "@sourcegraph/amp"
+cli_prompt_flags:
+  - -x
+  - --execute
+dangerous_inputs: {}
+dangerous_arg_patterns: []
