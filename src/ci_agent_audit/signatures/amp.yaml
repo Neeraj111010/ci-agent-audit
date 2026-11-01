@@ -1,7 +1,9 @@
 id: amp
 name: Amp CLI
 vendor: Amp
-description: Amp coding agent CLI for interactive and non-interactive use in local shells and CI workflows.
+description: Amp coding agent CLI and the first-party Amp Code Review GitHub Actions container.
+action_prefixes:
+  - "docker://ghcr.io/sourcegraph/cra-github:latest"
 cli_binaries:
   - amp
 cli_packages:
@@ -10,5 +12,6 @@ cli_packages:
 cli_prompt_flags:
   - -x
   - --execute
+  - -ox
 dangerous_inputs: {}
 dangerous_arg_patterns: []
