@@ -17,7 +17,7 @@ cli_binaries:
   - example-ai
 cli_packages:          # Optional: package name when run through npx, bunx, or uvx
   - "@example/ai-cli"
-cli_subcommands:       # Optional: required subcommands, for binary names shared with other tools
+cli_subcommands:       # Optional: the subcommands that start the agent, when the tool has other commands or shares its name
   - run
 prompt_inputs:
   - prompt
@@ -41,7 +41,15 @@ pytest
 python -m ci_agent_audit.cli validate-signatures
 ```
 
+`tests/test_signatures.py` picks up your file and tests every prompt input, command, package, and flag, so you don't need to write tests for those. If a test asks you to teach `_sample()` your pattern, say so in your pull request and we'll help.
+
 3. **Open a Pull Request** referencing the AI Action/CLI repository documentation!
+
+### Keep a Signature Accurate
+
+- **Commands:** if the tool has commands that don't start the agent, such as `auth` or `models`, set `cli_subcommands` to the ones that do. Otherwise those commands count as agent runs.
+- **Flags:** a pattern is searched across the whole `run:` block. `--auto` on its own also matches `--autostash` and `gh pr merge --auto`, so tie short flags to the command: `"tool\\s+run\\s+.*--auto(?:\\s|$)"`.
+- **New names:** when a project moves to another GitHub owner, keep the old name in `action_prefixes` and add the new one. Older workflows keep using the old name.
 
 ## Report a Detection Problem
 
