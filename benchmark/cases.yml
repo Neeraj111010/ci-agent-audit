@@ -466,6 +466,57 @@ direct:
           script:
             - claude -p "Fix the docs" --dangerously-skip-permissions
 
+  - name: pr-agent-under-its-current-name
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.31
+                with:
+                  extra_instructions: "Focus on: ${{ github.event.issue.body }}"
+
+  - name: openhands-review-plugin
+    expect: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request_target]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: OpenHands/extensions/plugins/pr-review@v1.0.0
+                with:
+                  llm-model: anthropic/claude-sonnet-5-5
+                  llm-api-key: ${{ secrets.LLM_API_KEY }}
+
+  - name: openhands-release-notes-in-shell
+    expect: [AIA010]
+    files:
+      .github/workflows/ai.yml: |
+        on:
+          schedule:
+            - cron: "0 9 * * 1"
+        permissions:
+          contents: read
+        jobs:
+          notes:
+            runs-on: ubuntu-latest
+            steps:
+              - id: notes
+                uses: OpenHands/extensions/plugins/release-notes@v1.0.0
+                with:
+                  tag: v1.2.3
+                  llm-api-key: ${{ secrets.LLM_API_KEY }}
+              - run: echo "${{ steps.notes.outputs.release-notes }}"
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
@@ -1046,6 +1097,40 @@ guards:
               - uses: anthropics/claude-code-action@v1.0.100
                 with:
                   prompt: "Triage: ${{ github.event.issue.body }}"
+
+  - name: agent-finding-count-in-shell
+    forbid: [AIA010]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - id: review
+                uses: anthropics/claude-code-security-review@v1.0.0
+              - run: test "${{ steps.review.outputs.findings-count }}" -eq 0
+
+  - name: openhands-scan-counts-in-shell
+    forbid: [AIA010]
+    files:
+      .github/workflows/ai.yml: |
+        on:
+          schedule:
+            - cron: "0 9 * * 1"
+        permissions:
+          contents: read
+        jobs:
+          scan:
+            runs-on: ubuntu-latest
+            steps:
+              - id: fix
+                uses: OpenHands/extensions/plugins/vulnerability-remediation@v1.0.0
+                with:
+                  llm-api-key: ${{ secrets.LLM_API_KEY }}
+              - run: echo "Found ${{ steps.fix.outputs.vulnerabilities-found }}, ${{ steps.fix.outputs.scan-only }}"
 
 gaps:
   - name: remote-reusable-workflow

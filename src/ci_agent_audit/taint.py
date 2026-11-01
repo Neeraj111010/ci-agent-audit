@@ -33,7 +33,20 @@ UNTRUSTED_GITHUB_CONTEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
 )
 
 # Outputs agent actions report about the run itself, which are not model text
-AGENT_METADATA_OUTPUTS = {"execution_file", "conclusion", "session_id", "branch_name", "github_token"}
+AGENT_METADATA_OUTPUTS = {
+    "execution_file",
+    "conclusion",
+    "session_id",
+    "branch_name",
+    "github_token",
+    "findings-count",
+    "vulnerabilities-found",
+    "scan-only",
+    "previous-tag",
+    "commit-count",
+    "contributor-count",
+    "new-contributor-count",
+}
 
 # Whole event objects embed attacker-controlled fields once serialized (e.g. `toJSON(github.event.issue)`).
 # Outside toJSON they render as "Object" or act as booleans, so they carry no text.

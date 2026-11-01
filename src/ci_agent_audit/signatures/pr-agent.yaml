@@ -5,6 +5,7 @@ description: AI-powered automated pull request reviewer, describer, and code imp
 action_prefixes:
   - Codium-ai/pr-agent
   - qodo-ai/pr-agent
+  - The-PR-Agent/pr-agent
 cli_binaries:
   - pr-agent
 prompt_inputs:
