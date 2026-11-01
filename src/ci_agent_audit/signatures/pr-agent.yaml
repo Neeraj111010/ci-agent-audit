@@ -1,6 +1,6 @@
 id: pr-agent
-name: Qodo (CodiumAI) PR-Agent Action
-vendor: Qodo
+name: PR-Agent
+vendor: The PR-Agent project
 description: AI-powered automated pull request reviewer, describer, and code improver for GitHub Actions and GitLab CI.
 action_prefixes:
   - Codium-ai/pr-agent

@@ -11,6 +11,7 @@
 ### Fixed
 
 - AIA010 no longer treats counts and flags from agent actions, such as `findings-count`, as model text.
+- Scan messages and the website use the current names for PR-Agent, OpenHands, and Goose.
 
 ## 0.1.3 (2026-10-31)
 
