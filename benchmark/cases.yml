@@ -1089,7 +1089,6 @@ gaps:
                 run: docker run --rm -e BODY ghcr.io/acme/agent claude -p "$BODY"
 
   - name: tool-without-a-signature
-    gap: true
     expect: [AIA001]
     files:
       .github/workflows/ai.yml: |

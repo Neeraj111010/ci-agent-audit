@@ -1122,6 +1122,19 @@ jobs:
     assert "AIA001" in _rule_ids(tmp_path, jobs)
 
 
+def test_opencode_run_is_detected(tmp_path: Path) -> None:
+    jobs = """
+jobs:
+  ai:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          BODY: ${{ github.event.issue.body }}
+        run: opencode run "$BODY"
+"""
+    assert "AIA001" in _rule_ids(tmp_path, jobs)
+
+
 def test_egress_rule_is_silent_on_trusted_triggers(tmp_path: Path) -> None:
     header = "on: [push]\npermissions:\n  contents: read\n"
     assert "AIA006" not in _rule_ids(tmp_path, _action_job('prompt: "Review"'), header)
