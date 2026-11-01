@@ -1,4 +1,4 @@
-# Labelled cases for tools/benchmark.py. Every workflow here was written for this benchmark.
+# Labelled cases for tools/run_benchmark.py. Every workflow here was written for this benchmark.
 #
 # expect: rules that must fire.
 # forbid: rules that must not fire.

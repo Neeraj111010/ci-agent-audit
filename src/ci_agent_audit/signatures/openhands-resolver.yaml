@@ -1,6 +1,6 @@
 id: openhands-resolver
-name: OpenHands Autonomous Issue Resolver
-vendor: All Hands AI
+name: OpenHands
+vendor: OpenHands
 description: OpenHands (formerly OpenDevin) CI action and CLI that autonomously resolves GitHub issues and PR comments.
 action_prefixes:
   - All-Hands-AI/OpenHands
