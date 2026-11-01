@@ -20,8 +20,8 @@
 
 `ci-agent-audit` reads your GitHub Actions and GitLab CI files and warns you when an AI agent such as Claude Code, Gemini CLI, or Codex is set up in a way that an outsider could abuse. It only reads YAML files. It never runs your workflows, calls an AI model, or sends anything over the network.
 
-| Follows the data | Knows your protection | Fixes the easy parts |
-| :--- | :--- | :--- |
+| Follows the data                                                                                                              | Knows your protection                                                                    | Fixes the easy parts                                                         |
+| :---------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
 | Tracks outside text through variables, step outputs, files, local actions, and reusable workflows until it reaches the agent. | Read-only tokens and author checks lower the severity, so the worst problems come first. | `--fix` handles common mistakes, and every finding tells you what to change. |
 
 **[Paste a workflow into the browser scanner](https://layer8labs8.github.io/ci-agent-audit/)** to see it work. There's nothing to install, and your file stays on your machine.
@@ -94,19 +94,19 @@ The scan ends with a summary:
 
 ## What it checks
 
-| Question | Why it matters | Rule |
-| :--- | :--- | :--- |
-| Can outsiders write part of the agent's prompt? | Their text can become instructions, even after passing through variables, step outputs, or files. | `AIA001` |
-| Is the agent told or allowed to fetch issue text with `gh`? | The prompt looks clean, but the agent still reads attacker text. | `AIA009` |
-| Are the agent's safety checks turned off? | Flags like `--dangerously-skip-permissions` remove its guardrails. | `AIA002` |
-| Can anyone trigger the agent? | A `[bot]` name check can be spoofed, and `"*"` lets every user in. | `AIA003` |
-| Is the agent action outdated or on a moving version? | A known bug or a changed release could reach your pipeline. | `AIA004` |
-| Does the agent hold too much access? | A hijacked agent with write access can change your code. | `AIA005` |
-| Can the agent send data anywhere? | With no network limits, stolen secrets can leave the runner. | `AIA006` |
-| Does CI download MCP servers with no fixed version? | A compromised package would run next to your secrets. | `AIA007` |
-| Does a privileged job run the agent on untrusted PR code? | Files in the PR can run with your repository's secrets. Reported as High when a current `actions/checkout` would refuse fork PR code. | `AIA008` |
-| Does the model's answer reach a shell or git command? | A hijacked answer becomes a command or a checkout of attacker code. | `AIA010` |
-| Is agent work pushed straight to `main`? | Injected changes land without review. | `AIA011` |
+| Question                                                    | Why it matters                                                                                                                        | Rule     |
+| :---------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ | :------- |
+| Can outsiders write part of the agent's prompt?             | Their text can become instructions, even after passing through variables, step outputs, or files.                                     | `AIA001` |
+| Is the agent told or allowed to fetch issue text with `gh`? | The prompt looks clean, but the agent still reads attacker text.                                                                      | `AIA009` |
+| Are the agent's safety checks turned off?                   | Flags like `--dangerously-skip-permissions` remove its guardrails.                                                                    | `AIA002` |
+| Can anyone trigger the agent?                               | A `[bot]` name check can be spoofed, and `"*"` lets every user in.                                                                    | `AIA003` |
+| Is the agent action outdated or on a moving version?        | A known bug or a changed release could reach your pipeline.                                                                           | `AIA004` |
+| Does the agent hold too much access?                        | A hijacked agent with write access can change your code.                                                                              | `AIA005` |
+| Can the agent send data anywhere?                           | With no network limits, stolen secrets can leave the runner.                                                                          | `AIA006` |
+| Does CI download MCP servers with no fixed version?         | A compromised package would run next to your secrets.                                                                                 | `AIA007` |
+| Does a privileged job run the agent on untrusted PR code?   | Files in the PR can run with your repository's secrets. Reported as High when a current `actions/checkout` would refuse fork PR code. | `AIA008` |
+| Does the model's answer reach a shell or git command?       | A hijacked answer becomes a command or a checkout of attacker code.                                                                   | `AIA010` |
+| Is agent work pushed straight to `main`?                    | Injected changes land without review.                                                                                                 | `AIA011` |
 
 Run `ci-agent-audit explain AIA001` for the full details of any rule, or `ci-agent-audit rules` for the list.
 
@@ -116,32 +116,32 @@ An agent is often hidden one step away, inside `./.github/actions/triage` or a r
 
 ### How severity works
 
-| Severity | What it means | What to do |
-| :--- | :--- | :--- |
-| **Critical** | An outsider may reach this with nothing in the way. | Fix before merging. |
-| **High** | Serious, but something may limit the damage. | Fix soon. |
-| **Medium** | A real weakness, or a risk behind a strong guard. | Plan a fix. |
-| **Low** | Good hygiene. | Fix when convenient. |
+| Severity     | What it means                                       | What to do           |
+| :----------- | :-------------------------------------------------- | :------------------- |
+| **Critical** | An outsider may reach this with nothing in the way. | Fix before merging.  |
+| **High**     | Serious, but something may limit the damage.        | Fix soon.            |
+| **Medium**   | A real weakness, or a risk behind a strong guard.   | Plan a fix.          |
+| **Low**      | Good hygiene.                                       | Fix when convenient. |
 
 Protection you already have lowers the severity. For example, prompt injection drops from Critical to High when the token is read-only or the workflow only runs on `pull_request`, where forks get no secrets. It drops to Medium when a complete check such as `author_association` limits who can start the job.
 
 ## Supported tools
 
-| Tool | Detected as | Tried on real workflows |
-| :--- | :--- | :--- |
-| Claude Code | Action and command | Yes |
-| Gemini CLI | Action and command | Yes |
-| OpenAI Codex | Action and command | Yes |
-| Goose | Command | A little |
-| Aider | Command | A little |
-| Claude Code Security Review | Action | Not yet |
-| GitHub AI Inference | Action | Not yet |
-| CodeRabbit | Action and command | Not yet |
-| Continue | Action and command | Not yet |
-| OpenHands | Action and command | Not yet |
-| PR-Agent | Action and command | Not yet |
-| SWE-agent | Command | Not yet |
-| Google Jules (next release) | Action | Not yet |
+| Tool                        | Detected as        | Tried on real workflows |
+| :-------------------------- | :----------------- | :---------------------- |
+| Claude Code                 | Action and command | Yes                     |
+| Gemini CLI                  | Action and command | Yes                     |
+| OpenAI Codex                | Action and command | Yes                     |
+| Goose                       | Command            | A little                |
+| Aider                       | Command            | A little                |
+| Claude Code Security Review | Action             | Not yet                 |
+| GitHub AI Inference         | Action             | Not yet                 |
+| CodeRabbit                  | Action and command | Not yet                 |
+| Continue                    | Action and command | Not yet                 |
+| OpenHands                   | Action and command | Not yet                 |
+| PR-Agent                    | Action and command | Not yet                 |
+| SWE-agent                   | Command            | Not yet                 |
+| Google Jules (next release) | Action             | Not yet                 |
 
 One scan checks for all of them, because it only reads your YAML and never starts an agent. Every tool goes through the same automated detection tests. The last column says how much real-world use backs that up, so reports for the newer ones are especially welcome.
 
@@ -223,32 +223,32 @@ repos:
 
 ## Command options
 
-| Option | What it does | Default |
-| :--- | :--- | :--- |
-| `--format` | Output as `text`, `json`, `sarif`, or `github` | `text` |
-| `--output`, `-o` | Write the report to a file | Print it |
-| `--severity` | Lowest severity to show | `low` |
-| `--fail-on` | Lowest severity that fails the build, or `none` | `high` |
-| `--ignore-rule` | Skip a rule. Can be repeated. | None |
-| `--config` | Load an ignore file | `.ci-agent-audit.yml` if present |
-| `--no-ignore` | Report everything, including ignored findings | Off |
-| `--signatures-dir` | Load your own tool signatures | None |
-| `--fix` | Apply the fixes above before scanning | Off |
+| Option             | What it does                                    | Default                          |
+| :----------------- | :---------------------------------------------- | :------------------------------- |
+| `--format`         | Output as `text`, `json`, `sarif`, or `github`  | `text`                           |
+| `--output`, `-o`   | Write the report to a file                      | Print it                         |
+| `--severity`       | Lowest severity to show                         | `low`                            |
+| `--fail-on`        | Lowest severity that fails the build, or `none` | `high`                           |
+| `--ignore-rule`    | Skip a rule. Can be repeated.                   | None                             |
+| `--config`         | Load an ignore file                             | `.ci-agent-audit.yml` if present |
+| `--no-ignore`      | Report everything, including ignored findings   | Off                              |
+| `--signatures-dir` | Load your own tool signatures                   | None                             |
+| `--fix`            | Apply the fixes above before scanning           | Off                              |
 
 Exit codes: `0` means nothing reached the `--fail-on` level, `1` means something did, and `2` means the scan itself failed, for example on invalid YAML or an empty folder.
 
 ## How accurate is it?
 
-Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 86 small repositories labelled with what must fire and what must stay quiet.
+Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 87 small repositories labelled with what must fire and what must stay quiet.
 
-| Cases | Number | Findings caught | Missed | False alarms |
-| :--- | ---: | ---: | ---: | ---: |
-| Direct risks | 33 | 33 | 0 | 0 |
-| Local composite actions | 10 | 10 | 0 | 0 |
-| Reusable workflows | 8 | 8 | 0 | 0 |
-| Guard and data-flow traps | 6 | 8 | 0 | 0 |
-| Safe setups | 25 | 10 | 0 | 0 |
-| Known gaps | 4 | 0 | 4 | 0 |
+| Cases                     | Number | Findings caught | Missed | False alarms |
+| :------------------------ | -----: | --------------: | -----: | -----------: |
+| Direct risks              |     33 |              33 |      0 |            0 |
+| Local composite actions   |     10 |              10 |      0 |            0 |
+| Reusable workflows        |      8 |               8 |      0 |            0 |
+| Guard and data-flow traps |      6 |               8 |      0 |            0 |
+| Safe setups               |     25 |              10 |      0 |            0 |
+| Known gaps                |      4 |               0 |      4 |            0 |
 
 That's 94.5% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The four misses are real gaps: remote reusable workflows, agents inside custom scripts or `docker run`, and tools with no signature yet.
 
@@ -258,11 +258,11 @@ Engine changes are also compared on the CI files of 135 public repositories that
 
 Run it next to a general workflow linter, not instead of one.
 
-| Tool | Best at |
-| :--- | :--- |
-| [zizmor](https://github.com/zizmorcore/zizmor) | General GitHub Actions security, such as shell injection and unpinned actions |
-| [actionlint](https://github.com/rhysd/actionlint) | Syntax and workflow mistakes |
-| `ci-agent-audit` | AI agent risks in CI, GitHub and GitLab coverage, and automatic fixes |
+| Tool                                              | Best at                                                                       |
+| :------------------------------------------------ | :---------------------------------------------------------------------------- |
+| [zizmor](https://github.com/zizmorcore/zizmor)    | General GitHub Actions security, such as shell injection and unpinned actions |
+| [actionlint](https://github.com/rhysd/actionlint) | Syntax and workflow mistakes                                                  |
+| `ci-agent-audit`                                  | AI agent risks in CI, GitHub and GitLab coverage, and automatic fixes         |
 
 Other projects in this area include [ARKEXA](https://github.com/alokgorithm/ARKEXA), which focuses on whether an outsider can actually reach each finding.
 

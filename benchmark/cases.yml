@@ -466,6 +466,19 @@ direct:
           script:
             - claude -p "Fix the docs" --dangerously-skip-permissions
 
+  - name: opencode-direct
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.issue.body }}
+                run: opencode run "$BODY"
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
@@ -1089,6 +1102,7 @@ gaps:
                 run: docker run --rm -e BODY ghcr.io/acme/agent claude -p "$BODY"
 
   - name: tool-without-a-signature
+    gap: true
     expect: [AIA001]
     files:
       .github/workflows/ai.yml: |
@@ -1099,7 +1113,7 @@ gaps:
             steps:
               - env:
                   BODY: ${{ github.event.issue.body }}
-                run: opencode run "$BODY"
+                run: acme-agent run "$BODY"
 
 safe:
   - name: trusted-prompt
