@@ -466,6 +466,37 @@ direct:
           script:
             - claude -p "Fix the docs" --dangerously-skip-permissions
 
+  - name: pr-agent-under-its-current-name
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.31
+                with:
+                  extra_instructions: "Focus on: ${{ github.event.issue.body }}"
+
+  - name: openhands-review-plugin
+    expect: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request_target]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: OpenHands/extensions/plugins/pr-review@v1.0.0
+                with:
+                  llm-model: anthropic/claude-sonnet-5-5
+                  llm-api-key: ${{ secrets.LLM_API_KEY }}
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]

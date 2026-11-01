@@ -6,6 +6,8 @@ action_prefixes:
   - All-Hands-AI/OpenHands
   - All-Hands-AI/openhands-resolver
   - OpenDevin/OpenDevin
+  - OpenHands/extensions/plugins/pr-review
+  - OpenHands/extensions/plugins/qa-changes
 cli_binaries:
   - openhands
 prompt_inputs:

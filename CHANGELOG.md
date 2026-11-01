@@ -5,6 +5,8 @@
 ### Added
 
 - Google Jules signature. Thanks to @Neeraj111010.
+- `The-PR-Agent/pr-agent`, the current name of PR-Agent. The old names still work.
+- OpenHands `pr-review` and `qa-changes` actions from `OpenHands/extensions/plugins/`.
 
 ## 0.1.3 (2026-10-31)
 
