@@ -884,6 +884,12 @@ def test_model_text_saved_as_data_is_not_flagged(tmp_path: Path) -> None:
     assert "AIA010" not in _rule_ids(tmp_path, _steps(body))
 
 
+@pytest.mark.parametrize("output", ["findings-count", "vulnerabilities-found", "scan-only", "commit-count"])
+def test_counts_from_an_agent_are_not_model_text(tmp_path: Path, output: str) -> None:
+    body = f'      - run: echo "${{{{ steps.ai.outputs.{output} }}}}"\n'
+    assert "AIA010" not in _rule_ids(tmp_path, _steps(body))
+
+
 @pytest.mark.parametrize(
     "with_ref",
     ["refs/pull/${{ github.event.pull_request.number }}/merge", "${{ github.event.pull_request.merge_commit_sha }}"],

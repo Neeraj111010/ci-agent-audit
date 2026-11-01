@@ -1,7 +1,7 @@
 id: goose-ci
-name: Block Goose Autonomous Agent CLI & Action
-vendor: Block
-description: Block's Goose autonomous developer agent running in CI/CD pipelines.
+name: Goose
+vendor: Agentic AI Foundation
+description: Goose autonomous developer agent running in CI/CD pipelines.
 cli_binaries:
   - goose
 cli_subcommands:

@@ -239,18 +239,18 @@ Exit codes: `0` means nothing reached the `--fail-on` level, `1` means something
 
 ## How accurate is it?
 
-Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 87 small repositories labelled with what must fire and what must stay quiet.
+Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 92 small repositories labelled with what must fire and what must stay quiet.
 
 | Cases                     | Number | Findings caught | Missed | False alarms |
 | :------------------------ | -----: | --------------: | -----: | -----------: |
-| Direct risks              |     33 |              33 |      0 |            0 |
+| Direct risks              |     37 |              37 |      0 |            0 |
 | Local composite actions   |     10 |              10 |      0 |            0 |
 | Reusable workflows        |      8 |               8 |      0 |            0 |
-| Guard and data-flow traps |      6 |               8 |      0 |            0 |
+| Guard and data-flow traps |      8 |               8 |      0 |            0 |
 | Safe setups               |     25 |              10 |      0 |            0 |
 | Known gaps                |      4 |               0 |      4 |            0 |
 
-That's 94.5% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The four misses are real gaps: remote reusable workflows, agents inside custom scripts or `docker run`, and tools with no signature yet.
+That's 94.8% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The four misses are real gaps: remote reusable workflows, agents inside custom scripts or `docker run`, and tools with no signature yet.
 
 Engine changes are also compared on the CI files of 135 public repositories that use AI agents. Following local files raised the repositories with a finding from 83 to 95, with no crashes, and the scan ran about a third faster. Those findings are risky patterns, not proven attacks.
 
