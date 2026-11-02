@@ -466,6 +466,19 @@ direct:
           script:
             - claude -p "Fix the docs" --dangerously-skip-permissions
 
+  - name: opencode-direct
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.issue.body }}
+                run: opencode run "$BODY"
+
   - name: pr-agent-under-its-current-name
     expect: [AIA001]
     files:
@@ -516,7 +529,6 @@ direct:
                   tag: v1.2.3
                   llm-api-key: ${{ secrets.LLM_API_KEY }}
               - run: echo "${{ steps.notes.outputs.release-notes }}"
-
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
@@ -1185,7 +1197,7 @@ gaps:
             steps:
               - env:
                   BODY: ${{ github.event.issue.body }}
-                run: opencode run "$BODY"
+                run: acme-agent run "$BODY"
 
 safe:
   - name: trusted-prompt

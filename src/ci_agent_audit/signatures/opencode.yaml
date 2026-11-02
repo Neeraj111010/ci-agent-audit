@@ -1,0 +1,27 @@
+id: opencode
+name: OpenCode
+vendor: Anomaly
+description: OpenCode CLI and GitHub Actions used for automated AI coding assistance.
+
+cli_binaries:
+  - opencode
+
+cli_packages:
+  - opencode-ai
+
+action_prefixes:
+  - anomalyco/opencode/github
+  - sst/opencode/github
+
+prompt_inputs:
+  - prompt
+
+cli_subcommands:
+  - run
+  - github run
+
+dangerous_inputs: {}
+
+dangerous_arg_patterns:
+  - pattern: "opencode\\s+run\\s+.*--auto(?:\\s|$)"
+    reason: "Automatically approves permissions that are not explicitly denied."
