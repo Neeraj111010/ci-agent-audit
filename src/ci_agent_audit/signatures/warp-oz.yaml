@@ -1,0 +1,11 @@
+id: warp-oz
+name: Warp Oz
+vendor: Warp
+description: Warp Oz coding agent GitHub Action.
+action_prefixes:
+  - warpdotdev/oz-agent-action
+prompt_inputs:
+  - prompt
+  - saved_prompt
+dangerous_inputs: {}
+dangerous_arg_patterns: []

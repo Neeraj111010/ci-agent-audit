@@ -1115,6 +1115,16 @@ jobs:
     assert _rule_ids(tmp_path, jobs) == set()
 
 
+@pytest.mark.parametrize("input_name", ["prompt", "saved_prompt"])
+def test_warp_oz_action_prompt_is_detected(tmp_path: Path, input_name: str) -> None:
+    jobs = _action_job(
+        f'{input_name}: "${{{{ github.event.issue.body }}}}"',
+        'warp_api_key: ${{ secrets.WARP_API_KEY }}',
+        uses="warpdotdev/oz-agent-action@v1",
+    )
+    assert "AIA001" in _rule_ids(tmp_path, jobs)
+
+
 def test_goose_agent_run_is_detected(tmp_path: Path) -> None:
     jobs = """
 jobs:
