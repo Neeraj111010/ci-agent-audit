@@ -545,6 +545,92 @@ direct:
                 with:
                   prompt: "Triage: ${{ github.event.issue.title }}"
 
+  - name: pr-agent-env-current-owner
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+                env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  pr_reviewer.extra_instructions: ${{ github.event.comment.body }}
+
+  - name: pr-agent-env-qodo-owner
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: qodo-ai/pr-agent@v0.41.0
+                env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  pr_code_suggestions.extra_instructions: ${{ github.event.comment.body }}
+
+  - name: pr-agent-env-codium-owner
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: Codium-ai/pr-agent@v0.41.0
+                env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.pull_request.body }}
+
+  - name: pr-agent-cli-auto-approve
+    expect: [AIA001, AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.comment.body }}
+                run: pr-agent --pr_url=https://example.invalid/org/repo/pull/1 review --extra_instructions "$BODY" --auto_approve
+
+  - name: pr-agent-step-output-to-env
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - id: instructions
+                env:
+                  BODY: ${{ github.event.pull_request.body }}
+                run: echo "text=$BODY" >> "$GITHUB_OUTPUT"
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+                env:
+                  pr_reviewer.extra_instructions: ${{ steps.instructions.outputs.text }}
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
@@ -1215,6 +1301,54 @@ gaps:
                   BODY: ${{ github.event.issue.body }}
                 run: acme-agent run "$BODY"
 
+  - name: pr-agent-workflow-env-instructions
+    gap: true
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        env:
+          PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+
+  - name: pr-agent-job-env-instructions
+    gap: true
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            env:
+              PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+
+  - name: pr-agent-docker-action
+    gap: true
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: docker://pragent/pr-agent:0.41.0-github_action
+                env:
+                  PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+
 safe:
   - name: trusted-prompt
     safe: true
@@ -1727,3 +1861,70 @@ safe:
               - uses: anthropics/claude-code-action@v1.0.100
                 with:
                   prompt: ${{ inputs.text }}
+
+  - name: pr-agent-static-env-instructions
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request, issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+                env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  pr_reviewer.extra_instructions: Focus on correctness.
+                  github_action_config.auto_review: "true"
+
+  - name: pr-agent-trusted-number-in-env
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: qodo-ai/pr-agent@v0.41.0
+                env:
+                  pr_reviewer.extra_instructions: Review PR ${{ github.event.pull_request.number }}.
+
+  - name: pr-agent-cli-without-auto-approve
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - run: pr-agent --pr_url=https://example.invalid/org/repo/pull/1 review
+
+  - name: pr-agent-unrelated-step-env
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [pull_request]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.pull_request.body }}
+                run: printf '%s' "$BODY"
+              - uses: Codium-ai/pr-agent@v0.41.0
+                env:
+                  pr_reviewer.extra_instructions: Focus on correctness.
