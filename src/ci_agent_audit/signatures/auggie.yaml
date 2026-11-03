@@ -15,5 +15,7 @@ prompt_inputs:
   - instruction
   - instruction_file
   - custom_context
+cli_prompt_flags:
+  - --print
 dangerous_inputs: {}
 dangerous_arg_patterns: []
