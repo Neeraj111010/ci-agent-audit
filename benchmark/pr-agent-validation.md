@@ -75,6 +75,10 @@ an exploitable vulnerability in a sampled project.
 The scanner engine is unchanged. Marking the misses as gaps keeps them in
 the reported recall rather than presenting them as passing detections.
 
+Update: all three misses are now detected and the cases moved to `direct`.
+Inherited env counts through the signature's `env_prompt_inputs`, and
+`docker://pragent/pr-agent` matches with any tag or digest.
+
 ## Run the checks
 
 After installing the development dependencies from CONTRIBUTING.md:

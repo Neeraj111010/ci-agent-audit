@@ -22,6 +22,8 @@ cli_subcommands:       # Optional: the subcommands that start the agent, when th
 prompt_inputs:
   - prompt
   - instructions
+env_prompt_inputs:     # Optional: settings the agent reads from env vars, so they count even when set in workflow or job `env:`
+  - agent.instructions # Matches AGENT__INSTRUCTIONS too
 cli_prompt_flags:
   - -p
   - --prompt

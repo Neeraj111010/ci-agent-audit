@@ -631,6 +631,83 @@ direct:
                 env:
                   pr_reviewer.extra_instructions: ${{ steps.instructions.outputs.text }}
 
+  - name: pr-agent-workflow-env-instructions
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        env:
+          PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+
+  - name: pr-agent-job-env-instructions
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            env:
+              PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+
+  - name: pr-agent-docker-action
+    expect: [AIA001]
+    forbid: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: docker://pragent/pr-agent:0.41.0-github_action
+                env:
+                  PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+
+  - name: pr-agent-docker-digest-action
+    expect: [AIA001]
+    forbid: [AIA002, AIA004]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: docker://pragent/pr-agent@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+                env:
+                  pr_code_suggestions.extra_instructions: ${{ github.event.comment.body }}
+
+  - name: agent-inside-docker-run
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.issue.body }}
+                run: docker run --rm -e BODY ghcr.io/acme/agent claude -p "$BODY"
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
@@ -1273,20 +1350,6 @@ gaps:
                   BODY: ${{ github.event.issue.body }}
                 run: python scripts/triage.py
 
-  - name: agent-inside-docker-run
-    gap: true
-    expect: [AIA001]
-    files:
-      .github/workflows/ai.yml: |
-        on: [issues]
-        jobs:
-          ai:
-            runs-on: ubuntu-latest
-            steps:
-              - env:
-                  BODY: ${{ github.event.issue.body }}
-                run: docker run --rm -e BODY ghcr.io/acme/agent claude -p "$BODY"
-
   - name: tool-without-a-signature
     gap: true
     expect: [AIA001]
@@ -1300,54 +1363,6 @@ gaps:
               - env:
                   BODY: ${{ github.event.issue.body }}
                 run: acme-agent run "$BODY"
-
-  - name: pr-agent-workflow-env-instructions
-    gap: true
-    expect: [AIA001]
-    files:
-      .github/workflows/ai.yml: |
-        on: [issue_comment]
-        permissions:
-          contents: read
-        env:
-          PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
-        jobs:
-          review:
-            runs-on: ubuntu-latest
-            steps:
-              - uses: The-PR-Agent/pr-agent@v0.41.0
-
-  - name: pr-agent-job-env-instructions
-    gap: true
-    expect: [AIA001]
-    files:
-      .github/workflows/ai.yml: |
-        on: [issue_comment]
-        permissions:
-          contents: read
-        jobs:
-          review:
-            runs-on: ubuntu-latest
-            env:
-              PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
-            steps:
-              - uses: The-PR-Agent/pr-agent@v0.41.0
-
-  - name: pr-agent-docker-action
-    gap: true
-    expect: [AIA001]
-    files:
-      .github/workflows/ai.yml: |
-        on: [issue_comment]
-        permissions:
-          contents: read
-        jobs:
-          review:
-            runs-on: ubuntu-latest
-            steps:
-              - uses: docker://pragent/pr-agent:0.41.0-github_action
-                env:
-                  PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
 
 safe:
   - name: trusted-prompt
@@ -1928,3 +1943,55 @@ safe:
               - uses: Codium-ai/pr-agent@v0.41.0
                 env:
                   pr_reviewer.extra_instructions: Focus on correctness.
+
+  - name: pr-agent-inherited-unrelated-env
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        env:
+          COMMENT: ${{ github.event.comment.body }}
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+
+  - name: pr-agent-step-env-overrides-inherited
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            env:
+              PR_REVIEWER__EXTRA_INSTRUCTIONS: ${{ github.event.comment.body }}
+            steps:
+              - uses: The-PR-Agent/pr-agent@v0.41.0
+                env:
+                  PR_REVIEWER__EXTRA_INSTRUCTIONS: Focus on correctness.
+
+  - name: inherited-prompt-env-not-read-as-config
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issue_comment]
+        permissions:
+          contents: read
+        jobs:
+          review:
+            runs-on: ubuntu-latest
+            env:
+              PROMPT: ${{ github.event.comment.body }}
+            steps:
+              - uses: anthropics/claude-code-action@v1.0.100
+                with:
+                  prompt: Review this pull request.

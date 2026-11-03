@@ -62,6 +62,7 @@ def parse_signature_dict(data: dict[str, Any], source: str = "<memory>") -> Acti
         cli_packages=[str(x) for x in (data.get("cli_packages") or [])],
         cli_subcommands=[str(x) for x in (data.get("cli_subcommands") or [])],
         prompt_inputs=[str(x) for x in (data.get("prompt_inputs") or [])],
+        env_prompt_inputs=[str(x) for x in (data.get("env_prompt_inputs") or [])],
         cli_prompt_flags=[str(x) for x in (data.get("cli_prompt_flags") or [])],
         dangerous_inputs={str(k): str(v) for k, v in dangerous_inputs_raw.items()},
         dangerous_arg_patterns=patterns,
