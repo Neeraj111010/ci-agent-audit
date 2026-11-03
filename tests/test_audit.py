@@ -209,7 +209,49 @@ review:
     rule_ids = {f.rule_id for f in findings}
     assert "AIA007" not in rule_ids
 
-    
+
+def test_gitlab_ci_before_script_agent_detected(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+review:
+  before_script:
+    - claude -p "Review $CI_MERGE_REQUEST_DESCRIPTION" --dangerously-skip-permissions
+  script:
+    - echo done
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    rule_ids = {f.rule_id for f in findings}
+    assert "AIA001" in rule_ids
+    assert "AIA002" in rule_ids
+    before = [f for f in findings if f.step_name == "before_script"]
+    assert before
+    assert all("before_script" in (f.snippet or "") for f in before)
+
+
+def test_gitlab_ci_after_script_agent_detected(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+cleanup:
+  script:
+    - echo done
+  after_script:
+    - claude -p "Summarize $CI_MERGE_REQUEST_DESCRIPTION" --dangerously-skip-permissions
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    rule_ids = {f.rule_id for f in findings}
+    assert "AIA001" in rule_ids
+    assert "AIA002" in rule_ids
+    after = [f for f in findings if f.step_name == "after_script"]
+    assert after
+    assert all("after_script" in (f.snippet or "") for f in after)
+
+
 def test_fixer_remediates_version_wildcard_and_permissions() -> None:
     raw = """name: Demo
 permissions: write-all
