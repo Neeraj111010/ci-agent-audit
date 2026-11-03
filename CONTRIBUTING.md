@@ -2,6 +2,17 @@
 
 Thank you for helping secure AI-powered CI/CD pipelines! `ci-agent-audit` is intentionally architected so that **adding a new AI GitHub Action or CLI tool signature requires editing just one small YAML file**.
 
+## Picking an Issue
+
+You don't need permission to start. Here's how we share the work:
+
+- **Small issues** (`good first issue`: signatures, benchmark cases, small fixes) aren't assigned. Open a pull request when you're ready. If two arrive for the same issue, we merge the first one that passes review and help the other author find another issue.
+- **Bigger issues** (`help wanted`) take days, so we assign them to avoid duplicate work. Comment with a short plan and wait to be assigned. If there's no pull request or update within 7 days, the issue opens up again.
+- Please take one bigger issue at a time.
+- Benchmark cases rarely clash, so several people can add cases for the same issue.
+
+Not sure where to start? Comment on any issue and ask.
+
 ## Add a New AI Tool Signature in 5 Minutes
 
 1. **Create one YAML file** in `src/ci_agent_audit/signatures/<tool-id>.yaml`:
