@@ -18,7 +18,5 @@ dangerous_arg_patterns:
     reason: "Automatically approves all Qwen Code tool calls, including file edits and shell commands; it does not enable sandboxing."
   - pattern: "qwen\\s+-y(?:\\s|$)"
     reason: "The -y shorthand enables Qwen Code YOLO mode and automatically approves all tool calls."
-  - pattern: "qwen\\s+.*--approval-mode=yolo(?:\\s|$)"
-    reason: "YOLO approval mode automatically approves all Qwen Code tool calls and does not enable sandboxing."
   - pattern: "qwen\\s+.*--approval-mode\\s+yolo(?:\\s|$)"
     reason: "YOLO approval mode automatically approves all Qwen Code tool calls and does not enable sandboxing."
