@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- PR-Agent instructions set in workflow or job `env:`, such as `PR_REVIEWER__EXTRA_INSTRUCTIONS`, now raise AIA001. Signatures list these settings under the new `env_prompt_inputs`.
+- Docker actions match with any tag or digest, so `docker://pragent/pr-agent:<tag>` is recognized as PR-Agent.
+- Agent commands started inside `docker run` or `podman run`, such as `docker run --rm image claude -p ...`, are detected.
+
 ## 0.1.4 (2026-11-03)
 
 ### Added

@@ -150,7 +150,7 @@ One scan checks for all of them, because it only reads your YAML and never start
 
 The [PR-Agent validation report](benchmark/pr-agent-validation.md) covers seven public workflow snapshots, controlled variants, and the remaining misses.
 
-Commands are also found in wrapped forms such as `timeout 60 claude` and `npx @anthropic-ai/claude-code`. GitLab CI support covers prompt injection, dangerous flags, and unpinned MCP servers in `script:` blocks. The other rules are GitHub Actions only.
+Commands are also found in wrapped forms such as `timeout 60 claude`, `npx @anthropic-ai/claude-code`, and `docker run image claude`. GitLab CI support covers prompt injection, dangerous flags, and unpinned MCP servers in `script:` blocks. The other rules are GitHub Actions only.
 
 ## Fix common problems automatically
 
@@ -244,18 +244,18 @@ Exit codes: `0` means nothing reached the `--fail-on` level, `1` means something
 
 ## How accurate is it?
 
-Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 105 small repositories labelled with what must fire and what must stay quiet.
+Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 109 small repositories labelled with what must fire and what must stay quiet.
 
 | Cases                     | Number | Findings caught | Missed | False alarms |
 | :------------------------ | -----: | --------------: | -----: | -----------: |
-| Direct risks              |     43 |              44 |      0 |            0 |
+| Direct risks              |     48 |              49 |      0 |            0 |
 | Local composite actions   |     10 |              10 |      0 |            0 |
 | Reusable workflows        |      8 |               8 |      0 |            0 |
 | Guard and data-flow traps |      8 |               8 |      0 |            0 |
-| Safe setups               |     29 |              10 |      0 |            0 |
-| Known gaps                |      7 |               0 |      7 |            0 |
+| Safe setups               |     32 |              10 |      0 |            0 |
+| Known gaps                |      3 |               0 |      3 |            0 |
 
-That's 92.0% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The seven misses are real gaps: remote reusable workflows, agents inside custom scripts or `docker run`, tools with no signature yet, PR-Agent instructions inherited from workflow/job environment variables, and PR-Agent Docker actions.
+That's 96.6% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The three misses are real gaps: remote reusable workflows, agents inside custom scripts, and tools with no signature yet.
 
 Engine changes are also compared on the CI files of 135 public repositories that use AI agents. Following local files raised the repositories with a finding from 83 to 95, with no crashes, and the scan ran about a third faster. Those findings are risky patterns, not proven attacks.
 
@@ -279,7 +279,7 @@ A scanner finds risky patterns, not proven attacks. A clean report does not mean
 - A reusable workflow that only other repositories call is scanned alone, so it can't see their triggers or checks.
 - Local calls are only followed for files in `.github/workflows`. A file scanned from anywhere else is read alone.
 - It doesn't follow data through artifacts, caches, or custom scripts.
-- PR-Agent instructions inherited from workflow/job `env:` are missed unless the step explicitly references them. Direct `uses: docker://pragent/pr-agent:...` actions are not recognized.
+- Workflow or job `env:` only counts as agent input when the tool reads that setting from the environment, like PR-Agent's `PR_REVIEWER__EXTRA_INSTRUCTIONS`. Other inherited variables stay quiet, even though an agent with a shell could read them.
 - It can't detect agents that read issues through their own built-in tools when the workflow doesn't mention them.
 - It flags untrusted data anywhere in a `run:` block that starts an agent, even if the agent never reads that data.
 - It reads guards from `if:` text, jobs listed in `needs:`, and common permission-check steps. An `if:` with `||` only counts as complete when every path has a check. A check it doesn't recognize doesn't count.

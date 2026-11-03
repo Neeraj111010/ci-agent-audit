@@ -271,6 +271,45 @@ def test_tainted_env_on_agent_step_is_a_sink(tmp_path: Path) -> None:
     assert "AIA001" in _rule_ids(tmp_path, jobs)
 
 
+def test_inherited_env_config_reports_its_definition(tmp_path: Path) -> None:
+    header = ISSUES_HEADER + "env:\n  PR_DESCRIPTION__EXTRA_INSTRUCTIONS: ${{ github.event.issue.body }}\n"
+    wf = tmp_path / "wf.yml"
+    wf.write_text(header + "jobs:\n  ai:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: qodo-ai/pr-agent@v0.41.0\n")
+    findings = [f for f in scan_workflow_file(wf) if f.rule_id == "AIA001"]
+    assert [(f.line, f.tool_id) for f in findings] == [(header.count("\n"), "pr-agent")]
+
+
+def test_inherited_env_ignored_by_agents_without_env_config(tmp_path: Path) -> None:
+    jobs = f"""
+    jobs:
+      ai:
+        runs-on: ubuntu-latest
+        env:
+          EXTRA_INSTRUCTIONS: ${{{{ github.event.issue.body }}}}
+        steps:
+          - uses: {SAFE_ACTION}
+            with:
+              prompt: Triage this issue.
+    """
+    assert "AIA001" not in _rule_ids(tmp_path, jobs)
+
+
+@pytest.mark.parametrize(
+    ("uses", "pinned"),
+    [
+        ("docker://pragent/pr-agent:0.41.0-github_action", True),
+        ("docker://pragent/pr-agent@sha256:" + "a" * 64, True),
+        ("docker://PRAgent/PR-Agent:latest", False),
+        ("docker://pragent/pr-agent", False),
+        ("docker://ghcr.io/sourcegraph/cra-github:v2.1.0", True),
+    ],
+)
+def test_docker_actions_match_any_tag(tmp_path: Path, uses: str, pinned: bool) -> None:
+    ids = _rule_ids(tmp_path, _action_job("extra_instructions: ${{ github.event.issue.body }}", uses=uses))
+    assert ("AIA004" not in ids) is pinned
+    assert "AIA006" in ids
+
+
 def test_scheduled_issue_list_reaches_agent_env(tmp_path: Path) -> None:
     header = "on:\n  schedule:\n    - cron: '0 * * * *'\npermissions:\n  contents: read\n"
     jobs = """
@@ -1079,6 +1118,8 @@ def test_sha_pin_is_not_flagged(tmp_path: Path) -> None:
         'pnpm dlx @anthropic-ai/claude-code -p "$BODY" --dangerously-skip-permissions',
         'yarn dlx @anthropic-ai/claude-code -p "$BODY" --dangerously-skip-permissions',
         'OUT=$(claude -p "$BODY" --dangerously-skip-permissions)',
+        'docker run --rm -e BODY ghcr.io/acme/agent claude -p "$BODY" --dangerously-skip-permissions',
+        'podman container run -i node:22 npx @anthropic-ai/claude-code -p "$BODY" --dangerously-skip-permissions',
     ],
 )
 def test_wrapped_cli_invocations_are_detected(tmp_path: Path, command: str) -> None:
@@ -1102,6 +1143,8 @@ jobs:
         "claude-sync push",
         "goose up",
         "goose -dir migrations postgres up",
+        "docker run --rm -e claude=1 alpine echo hi",
+        "docker run --name claude alpine echo hi",
     ],
 )
 def test_non_agent_commands_are_not_ai_steps(tmp_path: Path, command: str) -> None:

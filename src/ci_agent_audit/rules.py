@@ -286,9 +286,11 @@ DEFAULT_BRANCH_PUSH_RE = re.compile(
     re.MULTILINE,
 )
 
+# A container run passes its options, then the image, then the command (`docker run --rm -e X image claude`)
+CONTAINER_RUN = r"(?:docker|podman)\s+(?:container\s+)?run(?:\s+[^\s;&|]+)*?\s+(?!-)[^\s;&|]+"
 CLI_PREFIX = (
     r"(?:^|[;&|(]\s*|\$\(\s*)[ \t]*"
-    r"(?:(?:sudo|nohup|time|exec|command|xvfb-run|timeout\s+\S+|env|[A-Za-z_]\w*=\S*)\s+)*"
+    rf"(?:(?:sudo|nohup|time|exec|command|xvfb-run|timeout\s+\S+|env|[A-Za-z_]\w*=\S*|{CONTAINER_RUN})\s+)*"
 )
 CLI_RUNNER = r"(?:npx|bunx|uvx|pipx\s+run|pnpm\s+dlx|yarn\s+dlx)(?:\s+-{1,2}\S+)*\s+"
 CLI_INFO_ONLY = r"(?!\s+(?:--version|-v|--help|-h)\s*(?:$|[;&|)]))"
@@ -356,15 +358,31 @@ def _match_action_signature(
         action_slug, version_ref = uses_value.split("@", 1)
     else:
         action_slug, version_ref = uses_value, None
+    action_slug, docker_tag = _split_docker_tag(action_slug.strip())
+    version_ref = docker_tag or version_ref
 
-    action_slug_lower = action_slug.strip().lower()
+    action_slug_lower = action_slug.lower()
     for sig in signatures:
         if action_slug_lower in {a.lower() for a in sig.non_agent_actions}:
             continue
         for prefix in sig.action_prefixes:
-            if action_slug_lower == prefix.lower() or action_slug_lower.startswith(prefix.lower() + "/"):
+            prefix_lower = _split_docker_tag(prefix)[0].lower()
+            if action_slug_lower == prefix_lower or action_slug_lower.startswith(prefix_lower + "/"):
                 return sig, version_ref
     return None, version_ref
+
+
+def _env_config_key(name: str) -> str:
+    """Normalize a setting name the way env-configured agents read it (`PR_REVIEWER__X` is `pr_reviewer.x`)."""
+    return name.strip().lower().replace("__", ".")
+
+
+def _split_docker_tag(slug: str) -> tuple[str, str | None]:
+    """Split `docker://owner/image:tag` into the image and its tag; any tag names the same agent."""
+    if slug.lower().startswith("docker://") and ":" in slug.rsplit("/", 1)[-1]:
+        image, tag = slug.rsplit(":", 1)
+        return image, tag
+    return slug, None
 
 
 def _match_cli_signatures(
@@ -1184,6 +1202,32 @@ def _scan_github_job(
                                 severity=taint_severity,
                             )
                         )
+
+                # AIA001: Workflow/job env the agent reads as its prompt configuration
+                prompt_env_keys = {_env_config_key(k) for k in sig.env_prompt_inputs}
+                for env_key, env_sources in tainted_env.items():
+                    if env_key in (step_env or {}) or _env_config_key(env_key) not in prompt_env_keys:
+                        continue
+                    scope = next((b for b in (job_env, workflow_env) if isinstance(b, LineDict) and env_key in b), None)
+                    env_line = scope.get_key_line(env_key, job_data.__line__) if scope else job_data.__line__
+                    findings.append(
+                        _make_finding(
+                            rule_id="AIA001",
+                            file_path=job_source.path,
+                            line=env_line,
+                            col=scope.get_key_col(env_key, job_data.__col__) if scope else job_data.__col__,
+                            job_id=job_id,
+                            step_name=step_name,
+                            tool_id=sig.id,
+                            snippet=_get_snippet(job_source.lines, env_line),
+                            message=(
+                                f"Untrusted input ({_describe_sources(env_sources)}) reaches {sig.name} "
+                                f"through inherited `env.{env_key}`, which it reads as prompt configuration "
+                                "(PromptPwnd indirect prompt injection)."
+                            ),
+                            severity=taint_severity,
+                        )
+                    )
 
                 # AIA009: Agent reads attacker-written text through the gh CLI
                 agent_text = " ".join(str(v) for v in with_block.values() if v is not None)
