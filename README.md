@@ -141,7 +141,10 @@ Protection you already have lowers the severity. For example, prompt injection d
 | OpenHands                   | Action and command | Not yet                 |
 | PR-Agent                    | Action and command | Not yet                 |
 | SWE-agent                   | Command            | Not yet                 |
-| Google Jules (next release) | Action             | Not yet                 |
+| Google Jules                | Action             | Not yet                 |
+| Warp Oz                     | Action             | Not yet                 |
+| OpenCode                    | Action and command | Not yet                 |
+| Amp                         | Action and command | Not yet                 |
 
 One scan checks for all of them, because it only reads your YAML and never starts an agent. Every tool goes through the same automated detection tests. The last column says how much real-world use backs that up, so reports for the newer ones are especially welcome.
 
@@ -198,7 +201,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: layer8labs8/ci-agent-audit@v0.1.3
+      - uses: layer8labs8/ci-agent-audit@v0.1.4
         with:
           paths: .github/workflows
           fail-on: high
@@ -216,7 +219,7 @@ To run it as a [pre-commit](https://pre-commit.com) hook instead:
 ```yaml
 repos:
   - repo: https://github.com/layer8labs8/ci-agent-audit
-    rev: v0.1.3
+    rev: v0.1.4
     hooks:
       - id: ci-agent-audit
 ```
@@ -239,18 +242,18 @@ Exit codes: `0` means nothing reached the `--fail-on` level, `1` means something
 
 ## How accurate is it?
 
-Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 92 small repositories labelled with what must fire and what must stay quiet.
+Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 93 small repositories labelled with what must fire and what must stay quiet.
 
 | Cases                     | Number | Findings caught | Missed | False alarms |
 | :------------------------ | -----: | --------------: | -----: | -----------: |
-| Direct risks              |     37 |              37 |      0 |            0 |
+| Direct risks              |     38 |              38 |      0 |            0 |
 | Local composite actions   |     10 |              10 |      0 |            0 |
 | Reusable workflows        |      8 |               8 |      0 |            0 |
 | Guard and data-flow traps |      8 |               8 |      0 |            0 |
 | Safe setups               |     25 |              10 |      0 |            0 |
 | Known gaps                |      4 |               0 |      4 |            0 |
 
-That's 94.8% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The four misses are real gaps: remote reusable workflows, agents inside custom scripts or `docker run`, and tools with no signature yet.
+That's 94.9% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The four misses are real gaps: remote reusable workflows, agents inside custom scripts or `docker run`, and tools with no signature yet.
 
 Engine changes are also compared on the CI files of 135 public repositories that use AI agents. Following local files raised the repositories with a finding from 83 to 95, with no crashes, and the scan ran about a third faster. Those findings are risky patterns, not proven attacks.
 

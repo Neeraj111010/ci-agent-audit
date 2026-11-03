@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.1.4 (2026-11-03)
 
 ### Added
 
 - Google Jules signature. Thanks to @Neeraj111010.
+- Warp Oz signature. Thanks to @Vamsi-2581.
+- OpenCode signature. Thanks to @kenzyyshahin.
+- Amp signature. Thanks to @faizansaiyed123.
+- Warp Oz also covers the archived `warpdotdev/warp-agent-action` and the `skill` input.
 - `The-PR-Agent/pr-agent`, the current name of PR-Agent. The old names still work.
 - OpenHands `pr-review`, `qa-changes`, `release-notes`, and `vulnerability-remediation` actions from `OpenHands/extensions/plugins/`.
 

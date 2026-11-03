@@ -529,6 +529,22 @@ direct:
                   tag: v1.2.3
                   llm-api-key: ${{ secrets.LLM_API_KEY }}
               - run: echo "${{ steps.notes.outputs.release-notes }}"
+
+  - name: warp-agent-action-old-name
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: warpdotdev/warp-agent-action@v1.0.18
+                with:
+                  prompt: "Triage: ${{ github.event.issue.title }}"
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
