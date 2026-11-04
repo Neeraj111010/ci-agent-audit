@@ -2,7 +2,22 @@
 
 ## Unreleased
 
+### Added
+
+- Qwen Code signature. Thanks to @faizansaiyed123.
+- Augment Auggie signature. Thanks to @abhayspace.
+- Kiro CLI signature, including the older Amazon Q Developer `q chat`. Thanks to @Sarbajit-Sengupta.
+- Kilo Code signature. Thanks to @Sarbajit-Sengupta.
+- `--fix` upgrades every action whose signature sets `min_safe_version`, including signatures from `--signatures-dir`. Thanks to @Sarbajit-Sengupta.
+- OpenHands validation report and benchmark cases for its known gaps. Thanks to @codekongdev.
+
+### Changed
+
+- A package run such as `npx opencode-ai` now needs the signature's subcommand (`run`) to count as an agent, the same as the bare binary.
+
 ### Fixed
+
+- GitLab CI agents in `before_script:` and `after_script:` are now checked. Thanks to @ShahadatTest.
 
 - PR-Agent instructions set in workflow or job `env:`, such as `PR_REVIEWER__EXTRA_INSTRUCTIONS`, now raise AIA001. Signatures list these settings under the new `env_prompt_inputs`.
 - Docker actions match with any tag or digest, so `docker://pragent/pr-agent:<tag>` is recognized as PR-Agent.
