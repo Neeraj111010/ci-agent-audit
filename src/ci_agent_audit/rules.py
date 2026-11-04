@@ -1660,6 +1660,22 @@ def _check_action_with_inputs(
     return findings
 
 
+_GITLAB_SCRIPT_KEYS = ("before_script", "script", "after_script")
+
+
+def _render_gitlab_script_block(script_block: Any) -> str:
+    """Flatten a GitLab script / before_script / after_script value into text."""
+    raw_items = script_block if isinstance(script_block, list) else [script_block]
+    rendered_script_lines: list[str] = []
+    for item in raw_items:
+        if isinstance(item, Mapping):
+            for k, v in item.items():
+                rendered_script_lines.append(f"{k}: {v}")
+        elif item is not None:
+            rendered_script_lines.append(str(item))
+    return "\n".join(rendered_script_lines)
+
+
 def _scan_gitlab_jobs(
     *,
     file_path: Path,
@@ -1667,85 +1683,81 @@ def _scan_gitlab_jobs(
     root: LineDict,
     signatures: list[ActionSignature],
 ) -> list[Finding]:
-    """Scan GitLab CI job definitions (`script:` blocks and `variables:`)."""
+    """Scan GitLab CI job definitions (`before_script`/`script`/`after_script` and `variables:`)."""
     findings: list[Finding] = []
     global_vars = root.get("variables") if isinstance(root.get("variables"), Mapping) else None
 
     for job_name, job_body in root.items():
-        if not isinstance(job_body, LineDict) or "script" not in job_body:
+        if not isinstance(job_body, LineDict):
+            continue
+        if not any(key in job_body for key in _GITLAB_SCRIPT_KEYS):
             continue
         job_vars = job_body.get("variables") if isinstance(job_body.get("variables"), Mapping) else None
         tainted_env = collect_tainted_env_map(global_vars, job_vars)
 
-        script_block = job_body.get("script")
-        raw_items = script_block if isinstance(script_block, list) else [script_block]
-        rendered_script_lines: list[str] = []
-        for item in raw_items:
-            if isinstance(item, Mapping):
-                for k, v in item.items():
-                    rendered_script_lines.append(f"{k}: {v}")
-            elif item is not None:
-                rendered_script_lines.append(str(item))
-        script_text = "\n".join(rendered_script_lines)
-        script_line_num = job_body.get_key_line("script", job_body.__line__)
+        for script_key in _GITLAB_SCRIPT_KEYS:
+            if script_key not in job_body:
+                continue
+            script_text = _render_gitlab_script_block(job_body.get(script_key))
+            script_line_num = job_body.get_key_line(script_key, job_body.__line__)
 
-        # AIA007: Unpinned MCP server in GitLab script
-        for pkg_name in _iter_unpinned_mcp_packages(script_text):
-            findings.append(
-                _make_finding(
-                    rule_id="AIA007",
-                    file_path=file_path,
-                    line=script_line_num,
-                    col=job_body.get_key_col("script"),
-                    job_id=str(job_name),
-                    step_name="script",
-                    tool_id=None,
-                    snippet=_get_snippet(raw_lines, script_line_num),
-                    message=(
-                        f"MCP server package `{pkg_name}` is dynamically executed via npx/uvx "
-                        "without an exact version pin."
-                    ),
-                )
-            )
-
-        cli_sigs = _match_cli_signatures(script_text, signatures)
-        for cli_sig in cli_sigs:
-            taint_sources = find_all_taint_sources(script_text, tainted_env)
-            if taint_sources:
+            # AIA007: Unpinned MCP server in GitLab script block
+            for pkg_name in _iter_unpinned_mcp_packages(script_text):
                 findings.append(
                     _make_finding(
-                        rule_id="AIA001",
+                        rule_id="AIA007",
                         file_path=file_path,
                         line=script_line_num,
-                        col=job_body.get_key_col("script"),
+                        col=job_body.get_key_col(script_key),
                         job_id=str(job_name),
-                        step_name="script",
-                        tool_id=cli_sig.id,
+                        step_name=script_key,
+                        tool_id=None,
                         snippet=_get_snippet(raw_lines, script_line_num),
                         message=(
-                            f"Untrusted GitLab CI variable ({_describe_sources(taint_sources)}) flows into "
-                            f"{cli_sig.name} CLI invocation in job '{job_name}' (PromptPwnd risk)."
+                            f"MCP server package `{pkg_name}` is dynamically executed via npx/uvx "
+                            "without an exact version pin."
                         ),
                     )
                 )
-            for flag_pat in cli_sig.dangerous_arg_patterns:
-                if re.search(flag_pat.pattern, script_text):
+
+            cli_sigs = _match_cli_signatures(script_text, signatures)
+            for cli_sig in cli_sigs:
+                taint_sources = find_all_taint_sources(script_text, tainted_env)
+                if taint_sources:
                     findings.append(
                         _make_finding(
-                            rule_id="AIA002",
+                            rule_id="AIA001",
                             file_path=file_path,
                             line=script_line_num,
-                            col=job_body.get_key_col("script"),
+                            col=job_body.get_key_col(script_key),
                             job_id=str(job_name),
-                            step_name="script",
+                            step_name=script_key,
                             tool_id=cli_sig.id,
                             snippet=_get_snippet(raw_lines, script_line_num),
                             message=(
-                                f"{cli_sig.name} invoked with dangerous flag `{flag_pat.pattern}` "
-                                f"in GitLab CI job '{job_name}': {flag_pat.reason}"
+                                f"Untrusted GitLab CI variable ({_describe_sources(taint_sources)}) flows into "
+                                f"{cli_sig.name} CLI invocation in job '{job_name}' (PromptPwnd risk)."
                             ),
                         )
                     )
+                for flag_pat in cli_sig.dangerous_arg_patterns:
+                    if re.search(flag_pat.pattern, script_text):
+                        findings.append(
+                            _make_finding(
+                                rule_id="AIA002",
+                                file_path=file_path,
+                                line=script_line_num,
+                                col=job_body.get_key_col(script_key),
+                                job_id=str(job_name),
+                                step_name=script_key,
+                                tool_id=cli_sig.id,
+                                snippet=_get_snippet(raw_lines, script_line_num),
+                                message=(
+                                    f"{cli_sig.name} invoked with dangerous flag `{flag_pat.pattern}` "
+                                    f"in GitLab CI job '{job_name}': {flag_pat.reason}"
+                                ),
+                            )
+                        )
 
     return findings
 
