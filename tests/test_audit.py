@@ -252,6 +252,93 @@ cleanup:
     assert all("after_script" in (f.snippet or "") for f in after)
 
 
+def test_gitlab_ci_before_script_export_taints_script(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+review:
+  before_script:
+    - export T="$CI_MERGE_REQUEST_TITLE"
+  script:
+    - claude -p "$T"
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    finding = next(f for f in findings if f.rule_id == "AIA001")
+    assert finding.step_name == "script"
+
+
+def test_gitlab_ci_script_export_does_not_taint_after_script(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+review:
+  script:
+    - export T="$CI_MERGE_REQUEST_TITLE"
+  after_script:
+    - claude -p "$T"
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    assert "AIA001" not in {f.rule_id for f in findings}
+
+
+def test_gitlab_ci_static_export_does_not_taint_script(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+review:
+  before_script:
+    - export T="trusted instructions"
+  script:
+    - claude -p "$T"
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    assert "AIA001" not in {f.rule_id for f in findings}
+
+
+def test_gitlab_ci_default_before_script_export_taints_script(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+default:
+  before_script:
+    - export T="$CI_MERGE_REQUEST_TITLE"
+review:
+  script:
+    - claude -p "$T"
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    finding = next(f for f in findings if f.rule_id == "AIA001")
+    assert finding.job_id == "review"
+    assert finding.step_name == "script"
+
+
+def test_gitlab_ci_job_can_disable_default_before_script(tmp_path: Path) -> None:
+    gl = tmp_path / ".gitlab-ci.yml"
+    gl.write_text(
+        """
+default:
+  before_script:
+    - export T="$CI_MERGE_REQUEST_TITLE"
+review:
+  inherit:
+    default: false
+  script:
+    - claude -p "$T"
+""",
+        encoding="utf-8",
+    )
+    findings = scan_workflow_file(gl)
+    assert "AIA001" not in {f.rule_id for f in findings}
+
+
 def test_fixer_remediates_version_wildcard_and_permissions() -> None:
     raw = """name: Demo
 permissions: write-all
