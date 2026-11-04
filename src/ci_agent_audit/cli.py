@@ -208,7 +208,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         if args.fix:
             for wf in files:
-                modified, notes = apply_fixes_to_file(wf)
+                modified, notes = apply_fixes_to_file(wf, signatures)
                 if modified:
                     for note in notes:
                         print(f"[FIXED] {wf.as_posix()}: {note}", file=sys.stderr)
