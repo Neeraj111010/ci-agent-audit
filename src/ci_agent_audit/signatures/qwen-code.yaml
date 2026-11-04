@@ -1,0 +1,22 @@
+id: qwen-code
+name: Qwen Code
+vendor: Alibaba Cloud
+description: Qwen Code CLI and GitHub Action for automated coding tasks in CI.
+action_prefixes:
+  - QwenLM/qwen-code-action
+cli_binaries:
+  - qwen
+cli_packages:
+  - "@qwen-code/qwen-code"
+prompt_inputs:
+  - prompt
+cli_prompt_flags:
+  - -p
+  - --prompt
+dangerous_arg_patterns:
+  - pattern: "qwen\\s+.*--yolo(?:\\s|$)"
+    reason: "Automatically approves all Qwen Code tool calls, including file edits and shell commands; it does not enable sandboxing."
+  - pattern: "qwen\\s+-y(?:\\s|$)"
+    reason: "The -y shorthand enables Qwen Code YOLO mode and automatically approves all tool calls."
+  - pattern: "qwen\\s+.*--approval-mode\\s+yolo(?:\\s|$)"
+    reason: "YOLO approval mode automatically approves all Qwen Code tool calls and does not enable sandboxing."
