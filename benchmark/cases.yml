@@ -708,6 +708,102 @@ direct:
                   BODY: ${{ github.event.issue.body }}
                 run: docker run --rm -e BODY ghcr.io/acme/agent claude -p "$BODY"
 
+  # OpenHands validation: benchmark/openhands-validation.md
+  - name: openhands-qa-changes-plugin
+    expect: [AIA006]
+    forbid: [AIA001, AIA002, AIA009]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: OpenHands/extensions/plugins/qa-changes@v1.0.0
+                with:
+                  llm-api-key: ${{ secrets.LLM_API_KEY }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  - name: openhands-vulnerability-remediation-plugin
+    expect: [AIA006]
+    forbid: [AIA001, AIA002, AIA009]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: OpenHands/extensions/plugins/vulnerability-remediation@v1.0.0
+                with:
+                  llm-api-key: ${{ secrets.LLM_API_KEY }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  - name: openhands-cli-task-from-issue
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: openhands --task "Triage ${{ github.event.issue.body }}"
+
+  - name: openhands-cli-task-through-env
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.issue.body }}
+                run: openhands -t "$BODY"
+
+  - name: openhands-cli-task-through-file
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.issue.body }}
+                run: printf '%s' "$BODY" > task.txt
+              - run: openhands --file task.txt
+
+  - name: openhands-cli-task-through-step-output
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - id: text
+                env:
+                  BODY: ${{ github.event.issue.body }}
+                run: echo "task=$BODY" >> "$GITHUB_OUTPUT"
+              - run: openhands --task "${{ steps.text.outputs.task }}"
+
 composite:
   - name: composite-input-into-prompt
     expect: [AIA001]
@@ -1364,6 +1460,63 @@ gaps:
                   BODY: ${{ github.event.issue.body }}
                 run: acme-agent run "$BODY"
 
+  # OpenHands CLI misses, verified against the upstream argument parser.
+  - name: openhands-cli-through-uv-run
+    gap: true
+    expect: [AIA001]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: uv run openhands --task "${{ github.event.issue.body }}"
+
+  - name: openhands-cli-always-approve
+    gap: true
+    expect: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: openhands --always-approve --task "Review the formatting rules."
+
+  - name: openhands-cli-yolo
+    gap: true
+    expect: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: openhands --yolo --task "Review the formatting rules."
+
+  - name: openhands-cli-headless
+    gap: true
+    expect: [AIA002]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: openhands --headless --task "Review the formatting rules."
+
 safe:
   - name: trusted-prompt
     safe: true
@@ -1995,3 +2148,49 @@ safe:
               - uses: anthropics/claude-code-action@v1.0.100
                 with:
                   prompt: Review this pull request.
+
+  # OpenHands CLI negative controls.
+  - name: openhands-cli-static-task
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: openhands --task "Review the formatting rules."
+
+  - name: openhands-cli-info-only
+    safe: true
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - run: openhands --help
+              - run: openhands --version
+
+  - name: openhands-cli-unrelated-step-env
+    safe: true
+    allow: [AIA006]
+    files:
+      .github/workflows/ai.yml: |
+        on: [issues]
+        permissions:
+          contents: read
+        jobs:
+          ai:
+            runs-on: ubuntu-latest
+            steps:
+              - env:
+                  BODY: ${{ github.event.issue.body }}
+                run: printf '%s' "$BODY" > /dev/null
+              - run: openhands -t "Review the formatting rules."
