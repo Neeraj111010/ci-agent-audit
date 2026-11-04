@@ -138,7 +138,7 @@ Protection you already have lowers the severity. For example, prompt injection d
 | GitHub AI Inference         | Action             | Not yet                 |
 | CodeRabbit                  | Action and command | Not yet                 |
 | Continue                    | Action and command | Not yet                 |
-| OpenHands                   | Action and command | Not yet                 |
+| OpenHands                   | Action and command | A little                |
 | PR-Agent                    | Action and command | A little                |
 | SWE-agent                   | Command            | Not yet                 |
 | Google Jules                | Action             | Not yet                 |
@@ -148,7 +148,7 @@ Protection you already have lowers the severity. For example, prompt injection d
 
 One scan checks for all of them, because it only reads your YAML and never starts an agent. Every tool goes through the same automated detection tests. The last column says how much real-world use backs that up, so reports for the newer ones are especially welcome.
 
-The [PR-Agent validation report](benchmark/pr-agent-validation.md) covers seven public workflow snapshots, controlled variants, and the remaining misses.
+The [PR-Agent validation report](benchmark/pr-agent-validation.md) covers seven public workflow snapshots, controlled variants, and the remaining misses. The [OpenHands validation report](benchmark/openhands-validation.md) covers eight snapshots, CLI approval and wrapper misses, and the remote-workflow and Cloud limits.
 
 Commands are also found in wrapped forms such as `timeout 60 claude`, `npx @anthropic-ai/claude-code`, and `docker run image claude`. GitLab CI support covers prompt injection, dangerous flags, and unpinned MCP servers in `script:` blocks. The other rules are GitHub Actions only.
 
@@ -244,18 +244,18 @@ Exit codes: `0` means nothing reached the `--fail-on` level, `1` means something
 
 ## How accurate is it?
 
-Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 109 small repositories labelled with what must fire and what must stay quiet.
+Every change runs against [`benchmark/cases.yml`](https://github.com/layer8labs8/ci-agent-audit/blob/main/benchmark/cases.yml), 122 small repositories labelled with what must fire and what must stay quiet.
 
 | Cases                     | Number | Findings caught | Missed | False alarms |
 | :------------------------ | -----: | --------------: | -----: | -----------: |
-| Direct risks              |     48 |              49 |      0 |            0 |
+| Direct risks              |     54 |              55 |      0 |            0 |
 | Local composite actions   |     10 |              10 |      0 |            0 |
 | Reusable workflows        |      8 |               8 |      0 |            0 |
 | Guard and data-flow traps |      8 |               8 |      0 |            0 |
-| Safe setups               |     32 |              10 |      0 |            0 |
-| Known gaps                |      3 |               0 |      3 |            0 |
+| Safe setups               |     35 |              10 |      0 |            0 |
+| Known gaps                |      7 |               0 |      7 |            0 |
 
-That's 96.6% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The three misses are real gaps: remote reusable workflows, agents inside custom scripts, and tools with no signature yet.
+That's 92.9% recall and 100% precision on these cases. We wrote them ourselves, so treat this as a regression check and not a promise about your repository. The seven misses cover remote reusable workflows, agents inside custom scripts, tools with no signature yet, and OpenHands CLI wrappers and approval flags. The OpenHands report adds known misses without changing the scanner engine.
 
 Engine changes are also compared on the CI files of 135 public repositories that use AI agents. Following local files raised the repositories with a finding from 83 to 95, with no crashes, and the scan ran about a third faster. Those findings are risky patterns, not proven attacks.
 
