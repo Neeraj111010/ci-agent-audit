@@ -1,0 +1,14 @@
+id: kiro-cli
+name: Kiro CLI
+vendor: AWS
+description: Kiro CLI chat and its backward-compatible Amazon Q Developer CLI entry point.
+cli_binaries:
+  - kiro-cli
+  - kiro
+  - q
+cli_subcommands:
+  - chat
+dangerous_inputs: {}
+dangerous_arg_patterns:
+  - pattern: "(?:^|\\s)--trust-all-tools(?:\\s|$)"
+    reason: "Trusts all agent tools without asking for approval."
