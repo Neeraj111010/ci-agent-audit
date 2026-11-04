@@ -1676,6 +1676,52 @@ def _render_gitlab_script_block(script_block: Any) -> str:
     return "\n".join(rendered_script_lines)
 
 
+def _gitlab_env_after_exports(
+    script_text: str,
+    tainted_env: Mapping[str, list[str]],
+) -> dict[str, list[str]]:
+    """Return the shell environment after applying tainted or clean export assignments."""
+    result = {name: list(sources) for name, sources in tainted_env.items()}
+    export_commands = re.finditer(
+        r"(?:^|[\n;]|&&|\|\|)\s*export\s+([^\n;&|]+)",
+        script_text,
+    )
+    assignment_pattern = re.compile(
+        r"([A-Za-z_]\w*)=(\"(?:\\.|[^\"])*\"|'[^']*'|[^\s]+)"
+    )
+    for command in export_commands:
+        for assignment in assignment_pattern.finditer(command.group(1)):
+            name, value = assignment.groups()
+            sources = find_all_taint_sources(value, result)
+            if sources:
+                result[name] = sources
+            else:
+                result.pop(name, None)
+    return result
+
+
+def _gitlab_effective_before_script(root: LineDict, job_body: LineDict) -> Any:
+    """Return the job before_script, including the inherited default when applicable."""
+    if "before_script" in job_body:
+        return job_body.get("before_script")
+
+    default = root.get("default")
+    if not isinstance(default, Mapping) or "before_script" not in default:
+        return None
+
+    inherit = job_body.get("inherit")
+    if inherit is False:
+        return None
+    if isinstance(inherit, Mapping):
+        default_inherit = inherit.get("default", True)
+        if default_inherit is False:
+            return None
+        if isinstance(default_inherit, list) and "before_script" not in default_inherit:
+            return None
+
+    return default.get("before_script")
+
+
 def _scan_gitlab_jobs(
     *,
     file_path: Path,
@@ -1683,7 +1729,7 @@ def _scan_gitlab_jobs(
     root: LineDict,
     signatures: list[ActionSignature],
 ) -> list[Finding]:
-    """Scan GitLab CI job definitions (`before_script`/`script`/`after_script` and `variables:`)."""
+    """Scan GitLab CI jobs for before_script, script, after_script and variables."""
     findings: list[Finding] = []
     global_vars = root.get("variables") if isinstance(root.get("variables"), Mapping) else None
 
@@ -1694,12 +1740,22 @@ def _scan_gitlab_jobs(
             continue
         job_vars = job_body.get("variables") if isinstance(job_body.get("variables"), Mapping) else None
         tainted_env = collect_tainted_env_map(global_vars, job_vars)
+        before_script = _gitlab_effective_before_script(root, job_body)
+        before_script_text = _render_gitlab_script_block(before_script)
+        before_script_env = _gitlab_env_after_exports(before_script_text, tainted_env)
 
         for script_key in _GITLAB_SCRIPT_KEYS:
             if script_key not in job_body:
                 continue
             script_text = _render_gitlab_script_block(job_body.get(script_key))
             script_line_num = job_body.get_key_line(script_key, job_body.__line__)
+            if script_key == "before_script":
+                script_tainted_env = _gitlab_env_after_exports(script_text, tainted_env)
+            elif script_key == "script":
+                script_tainted_env = _gitlab_env_after_exports(script_text, before_script_env)
+            else:
+                # GitLab runs after_script in a separate shell.
+                script_tainted_env = _gitlab_env_after_exports(script_text, tainted_env)
 
             # AIA007: Unpinned MCP server in GitLab script block
             for pkg_name in _iter_unpinned_mcp_packages(script_text):
@@ -1722,7 +1778,7 @@ def _scan_gitlab_jobs(
 
             cli_sigs = _match_cli_signatures(script_text, signatures)
             for cli_sig in cli_sigs:
-                taint_sources = find_all_taint_sources(script_text, tainted_env)
+                taint_sources = find_all_taint_sources(script_text, script_tainted_env)
                 if taint_sources:
                     findings.append(
                         _make_finding(
