@@ -401,7 +401,7 @@ def _match_cli_signatures(
             for binary in sig.cli_binaries
         ]
         patterns += [
-            rf"{CLI_PREFIX}{CLI_RUNNER}{re.escape(package)}(?:@[\w.-]+)?(?![\w./-]){CLI_INFO_ONLY}"
+            rf"{CLI_PREFIX}{CLI_RUNNER}{re.escape(package)}(?:@[\w.-]+)?(?![\w./-]){subcommand}{CLI_INFO_ONLY}"
             for package in sig.cli_packages
         ]
         if any(re.search(pattern, run_script, re.MULTILINE) for pattern in patterns):
