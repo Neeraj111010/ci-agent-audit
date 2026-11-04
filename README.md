@@ -145,12 +145,16 @@ Protection you already have lowers the severity. For example, prompt injection d
 | Warp Oz                     | Action             | Not yet                 |
 | OpenCode                    | Action and command | Not yet                 |
 | Amp                         | Action and command | Not yet                 |
+| Qwen Code                   | Action and command | Not yet                 |
+| Augment Auggie              | Action and command | Not yet                 |
+| Kiro CLI                    | Command            | Not yet                 |
+| Kilo Code                   | Action and command | Not yet                 |
 
 One scan checks for all of them, because it only reads your YAML and never starts an agent. Every tool goes through the same automated detection tests. The last column says how much real-world use backs that up, so reports for the newer ones are especially welcome.
 
 The [PR-Agent validation report](benchmark/pr-agent-validation.md) covers seven public workflow snapshots, controlled variants, and the remaining misses. The [OpenHands validation report](benchmark/openhands-validation.md) covers eight snapshots, CLI approval and wrapper misses, and the remote-workflow and Cloud limits.
 
-Commands are also found in wrapped forms such as `timeout 60 claude`, `npx @anthropic-ai/claude-code`, and `docker run image claude`. GitLab CI support covers prompt injection, dangerous flags, and unpinned MCP servers in `script:` blocks. The other rules are GitHub Actions only.
+Commands are also found in wrapped forms such as `timeout 60 claude`, `npx @anthropic-ai/claude-code`, and `docker run image claude`. GitLab CI support covers prompt injection, dangerous flags, and unpinned MCP servers in `before_script:`, `script:`, and `after_script:` blocks. The other rules are GitHub Actions only.
 
 ## Fix common problems automatically
 
@@ -160,7 +164,7 @@ ci-agent-audit scan .github/workflows --fix
 
 `--fix` handles three cases:
 
-- Upgrades `anthropics/claude-code-action` from a vulnerable version to `v1.0.94`, the minimum safe version. Choose a newer release if you can.
+- Upgrades an AI action from a vulnerable release to its minimum safe version, for every signature that sets `min_safe_version`. Today that's `anthropics/claude-code-action`, upgraded to `v1.0.94`. Choose a newer release if you can.
 - Clears `"*"` from `allowed_non_write_users` and `allowed_bots`.
 - Replaces `permissions: write-all` with `contents: read`.
 
