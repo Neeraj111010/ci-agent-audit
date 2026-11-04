@@ -36,6 +36,8 @@ def _command(signature: ActionSignature, binary: str) -> str:
 
 def _sample(pattern: str) -> str:
     """Turn a flag pattern back into text it matches."""
+    if pattern.startswith("(?:kilo|@kilocode/cli"):
+        return "kilo run --auto"
     for regex, text in (("(?:^|\\s)", ""), ("(?:\\s|$)", ""), ("[=\\s]+", "="), ("\\s+", " ")):
         pattern = pattern.replace(regex, text)
     return pattern.replace("\\", "")
@@ -76,7 +78,7 @@ def test_a_folder_with_the_command_name_is_not_detected(
 
 @pytest.mark.parametrize(("signature", "package"), PACKAGES, ids=_ids(PACKAGES))
 def test_every_package_is_detected(tmp_path: Path, signature: ActionSignature, package: str) -> None:
-    assert "AIA001" in _rules(tmp_path, _run_step(f'npx {package} "$BODY"'))
+    assert "AIA001" in _rules(tmp_path, _run_step(f'npx {_command(signature, package)} "$BODY"'))
 
 
 @pytest.mark.parametrize(("signature", "pattern"), PATTERNS, ids=_ids(PATTERNS))

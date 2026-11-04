@@ -1,0 +1,18 @@
+id: kilo-code
+name: Kilo Code CLI
+vendor: Kilo
+description: Kilo Code headless CLI and first-party GitHub Action.
+action_prefixes:
+  - Kilo-Org/kilocode/github
+cli_binaries:
+  - kilo
+cli_packages:
+  - "@kilocode/cli"
+cli_subcommands:
+  - run
+prompt_inputs:
+  - prompt
+dangerous_inputs: {}
+dangerous_arg_patterns:
+  - pattern: "(?:kilo|@kilocode/cli(?:@[\\w.-]+)?)\\s+run\\s+.*--auto(?:\\s|$)"
+    reason: "Automatically approves Kilo tool permissions that are not explicitly denied."
